@@ -11,8 +11,24 @@
 #include "../../my_lib/work_with_file.h"
 #include "../../my_lib/len_arr/len_array.h"
 
-typedef char * data_type;
+
 #define TREE_STR
+
+#ifdef TREE_STR
+
+typedef char * data_type;
+#define data_spec "%s"
+
+#endif
+
+#ifdef TREE_INT
+
+typedef int data_type;
+#define data_spec "%d"
+
+#endif
+
+
 
 enum WAY_CPY_BRANCH
 {
@@ -39,6 +55,7 @@ struct Node
     Node* left;
     Node* right;
     Node *prev;
+    bool ans_or_quest = false; //
 };
 
 struct Tree
@@ -61,7 +78,7 @@ Node *Read_from_file_Node(char *buff, Tree *tree, int *counter);
 
 CODE_ERRORS Write_inf_about_node_to_File(FILE *stream_write, Node *node);
 
-bool func_cmp_int(Node *node1, Node *node2);
+bool func_cmp_int(Node *node1, Node *node2, Tree *tree);
 #endif
 
 #ifdef TREE_STR
@@ -69,11 +86,11 @@ CODE_ERRORS Write_inf_about_node_to_File(FILE *stream_write, Node *node);
 
 Node *Read_from_file_Node(char *buff, Tree *tree, int *counter);
 
-bool func_cmp_str(Node *node1, Node *node2);
+bool func_cmp_str(Node *node1, Node *node2, Tree *tree);
 #endif
 CODE_ERRORS Set_new_High(Tree *tree, Node *node);
 
-int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_node, bool func_cmp(Node *, Node *), bool flag_add=true);
+int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_node, bool func_cmp(Node *, Node *, Tree *), bool flag_add=true);
 
 CODE_ERRORS Increase_copacity_Tree(Tree *tree);
 

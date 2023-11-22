@@ -19,11 +19,11 @@ CODE_ERRORS Graphiz_Dump_Tree(Tree *tree)
 
 CODE_ERRORS Recr_Write_Node_Dump(FILE *stream_write, Node *cur_node, int deep_recr)
 {
-        LOG(1, stderr, "Write_Graphiz_Dump_to_File_Tree i=%d, node = %p", deep_recr ,cur_node);
+        LOG(1, stderr, "Write_Graphiz_Dump_to_File_Tree i=%d, node = %p, data="data_spec, deep_recr ,cur_node, cur_node->data);
 
         const char *color = "#fff3e0";
         fprintf(stream_write,
-                "node%p[label = \"%d \", fillcolor = \"%s\", rank = %d];\n",
+                "node%p[label = \""data_spec"\", fillcolor = \"%s\", rank = %d];\n",
                 cur_node, cur_node->data,
                 color, deep_recr);
 

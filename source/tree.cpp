@@ -1,6 +1,6 @@
 #include "tree.h"
 
-static const int MAX_SIZE_DATA_STR = 10;
+static const int MAX_SIZE_DATA_STR = 100;
 
 Tree *init_tree(int beg_copacity)
 {
@@ -86,7 +86,7 @@ CODE_ERRORS Write_inf_about_node_to_File(FILE *stream_write, Node *node)
 }
 
 
-bool func_cmp_str(Node *node1, Node *node2)
+bool func_cmp_str(Node *node1, Node *node2, Tree *tree)
 {
     if(node1->data[0] > node2->data[0])   return true;
     return false;
@@ -148,10 +148,11 @@ Node *Read_from_file_Node(char *buff, Tree *tree, int *counter)
     if(buff[*counter] != ')')   LOG(1, stderr, "ERRRRROOOOOORRRRRRR!!!!!!!!!!!!!!");
     (*counter)++;
 
+    free(data);
     return cur_node;
 }
 
-bool func_cmp_int(Node *node1, Node *node2)
+bool func_cmp_int(Node *node1, Node *node2, Tree *tree)
 {
     if(node1->data > node2->data)   return true;
     return false;
@@ -230,18 +231,18 @@ CODE_ERRORS Insert_Node_to_Tree(Node *node_to_ins, Node *node_after_ins, WAY_INS
     return ALL_GOOD;
 }
 
-int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_node, bool func_cmp(Node *, Node *), bool flag_add)
+int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_node, bool func_cmp(Node *, Node *, Tree *), bool flag_add)
 {
     Node *save_top_node = tree->beg_node;
     int code_ret = 0;
-    bool result = func_cmp(cur_node, tree->beg_node);
+    bool result = func_cmp(cur_node, tree->beg_node, tree);
     if(result)
     {
         if(tree->beg_node->right != nullptr)
         {
             Stack_Push(tree->stk_of_choise, (Elen_s) RIGHT_CHOISE);
             tree->beg_node = tree->beg_node->right;
-            code_ret = Set_Node_on_Place_in_Tree(tree, cur_node, func_cmp);
+            code_ret = Set_Node_on_Place_in_Tree(tree, cur_node, func_cmp, flag_add);
         }
         else if(flag_add)
         {
@@ -252,9 +253,9 @@ int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_node, bool func_cmp(Node *, 
     {
         if(tree->beg_node->left != nullptr)
         {
-            Stack_Push(tree->stk_of_choise, (Elen_s) RIGHT_CHOISE);
+            Stack_Push(tree->stk_of_choise, (Elen_s) LEFT_CHOISE);
             tree->beg_node = tree->beg_node->left;
-            code_ret = Set_Node_on_Place_in_Tree(tree, cur_node, func_cmp);
+            code_ret = Set_Node_on_Place_in_Tree(tree, cur_node, func_cmp, flag_add);
         }
         else if(flag_add)
         {
