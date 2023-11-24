@@ -22,14 +22,9 @@ int main()
     HANDLER_ERROR(Set_new_High(tree, node1));
     Insert_Node_to_Tree(node2, node1, LEFT_INS);
     Insert_Node_to_Tree(node3, node1, RIGHT_INS);
-    Insert_Node_to_Tree(node4, node3, RIGHT_INS);
-    Insert_Node_to_Tree(node5, node3, LEFT_INS);
+    Insert_Node_to_Tree(node4, node2, RIGHT_INS);
+    Insert_Node_to_Tree(node5, node2, LEFT_INS);
 
-    FILE *stream_to_write = open_file("database/new.txt", "w");//сделать динамическую генерацию имени
-
-    Write_inf_about_node_to_File(stream_to_write, tree->beg_node);
-
-    fclose(stream_to_write);
     Play_Akinator();
 
     Graphiz_Dump_Tree(tree);

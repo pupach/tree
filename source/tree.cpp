@@ -1,7 +1,5 @@
 #include "tree.h"
 
-static const int MAX_SIZE_DATA_STR = 100;
-
 Tree *init_tree(int beg_copacity)
 {
     LOG(1, stderr, "tree init begin \n");
@@ -35,6 +33,7 @@ Node *Read_from_file_Node(char *buff, Tree *tree, int *counter)
 
     if(buff[*counter] != '(')
     {
+        free(data);
         if(strcmp(buff + *counter, "nill") == 0)
         {
             *counter += strlen(buff + *counter) + 1;
@@ -57,6 +56,7 @@ Node *Read_from_file_Node(char *buff, Tree *tree, int *counter)
     if(buff[*counter] != ')')   LOG(1, stderr, "ERRRRROOOOOORRRRRRR!!!!!!!!!!!!!!");
     (*counter)++;
 
+    free(data);
     return cur_node;
 }
 
@@ -162,10 +162,20 @@ bool func_cmp_int(Node *node1, Node *node2, Tree *tree)
 
 CODE_ERRORS Destructor_Tree(Tree *tree)
 {
-    free(tree->list_node);
     Stack_Destructor(tree->stk_of_choise);
     free(tree->stk_of_choise);
 
+    LOG(1, stderr, "Destructor tree->size = %d\n", tree->size);
+
+    #ifdef TREE_STR
+    for(int i = 0; i < tree->size; i++)
+    {
+        free((tree->list_node + i)->data);
+        LOG(1, stderr, " tree->size = %d - free\n", i);
+    }
+    #endif
+
+    free(tree->list_node);
     tree->beg_node = nullptr;
     tree->list_node = nullptr;
     tree->size = -1;
@@ -178,18 +188,34 @@ CODE_ERRORS Destructor_Tree(Tree *tree)
 
 Node *Create_Node(Tree *tree, data_type data, Node *left, Node *right, Node *prev)
 {
+    #ifdef TREE_STR
+        char *data_to_tree = (char *)calloc(sizeof(char), MAX_SIZE_DATA_STR);
+        strcpy(data_to_tree, data);
+    #else
+        data_type data_to_tree = data;
+    #endif
+
     if(tree->size >= tree->copacity)
     {
         HANDLER_ERROR(Increase_copacity_Tree(tree));
     }
     Node *cur_Node = tree->list_node + tree->size;
-    cur_Node->data = data;
+    cur_Node->data = data_to_tree;
     cur_Node->left = left;
     cur_Node->right = right;
     cur_Node->prev = prev;
 
+    if(left != nullptr)
+    {
+        left->prev = cur_Node;
+    }
+    if(right != nullptr)
+    {
+        right->prev = cur_Node;
+    }
+
     tree->size += 1;
-    return cur_Node;
+    return cur_Node;//убрать возможность делать узлы с помощь.create_node or Insert_Node_to_Tree
 }
 
 CODE_ERRORS Increase_copacity_Tree(Tree *tree)
@@ -207,8 +233,13 @@ CODE_ERRORS Increase_copacity_Tree(Tree *tree)
 
 CODE_ERRORS Insert_Node_to_Tree(Node *node_to_ins, Node *node_after_ins, WAY_INS_NODE ins_mode, WAY_CPY_BRANCH cpy_mode)
 {
+    assert(node_to_ins != nullptr);
+    assert(node_after_ins != nullptr);
+
     Node *branch_to_cpy = nullptr;
     node_to_ins->prev = node_after_ins;
+
+    LOG(1, stderr, "node_to_ins = %p node_to_ins->prev = %p\n", node_to_ins, node_to_ins->prev);
 
     if (ins_mode == LEFT_INS)
     {
@@ -240,7 +271,7 @@ int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_node, bool func_cmp(Node *, 
     {
         if(tree->beg_node->right != nullptr)
         {
-            Stack_Push(tree->stk_of_choise, (Elen_s) RIGHT_CHOISE);
+            HANDLER_ERROR(Stack_Push(tree->stk_of_choise, (Elen_s) RIGHT_CHOISE));
             tree->beg_node = tree->beg_node->right;
             code_ret = Set_Node_on_Place_in_Tree(tree, cur_node, func_cmp, flag_add);
         }
@@ -253,7 +284,7 @@ int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_node, bool func_cmp(Node *, 
     {
         if(tree->beg_node->left != nullptr)
         {
-            Stack_Push(tree->stk_of_choise, (Elen_s) LEFT_CHOISE);
+            HANDLER_ERROR(Stack_Push(tree->stk_of_choise, (Elen_s) LEFT_CHOISE));
             tree->beg_node = tree->beg_node->left;
             code_ret = Set_Node_on_Place_in_Tree(tree, cur_node, func_cmp, flag_add);
         }

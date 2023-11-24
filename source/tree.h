@@ -12,7 +12,7 @@
 #include "../../my_lib/len_arr/len_array.h"
 
 
-#define TREE_STR
+#define TREE_DOUBLE
 
 #ifdef TREE_STR
 
@@ -27,6 +27,14 @@ typedef int data_type;
 #define data_spec "%d"
 
 #endif
+
+#ifdef TREE_DOUBLE
+
+typedef double data_type;
+#define data_spec "%lf"
+
+#endif
+
 
 
 
@@ -56,6 +64,7 @@ struct Node
     Node* right;
     Node *prev;
     bool ans_or_quest = false; //
+    int type_data = 0;
 };
 
 struct Tree
