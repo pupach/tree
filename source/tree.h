@@ -12,7 +12,7 @@
 #include "../../my_lib/len_arr/len_array.h"
 
 
-#define TREE_DOUBLE
+#define TREE_STR
 
 #ifdef TREE_STR
 
@@ -59,7 +59,7 @@ enum WAY_INS_NODE
 
 struct Node
 {
-    data_type data;
+    data_type data;//TODO: structиз enum and uint
     Node* left;
     Node* right;
     Node *prev;
@@ -73,12 +73,12 @@ struct Tree
     int size = -1;
     Node *list_node;
     int copacity = -1;
-    size_t factor_copacity = 2;
+    int factor_copacity = 2;
     Stack *stk_of_choise;
+    Node head_node;
 };
 
 Tree *init_tree(int beg_copacity=10);
-
 
 CODE_ERRORS Destructor_Tree(Tree *tree);
 
@@ -89,6 +89,7 @@ CODE_ERRORS Write_inf_about_node_to_File(FILE *stream_write, Node *node);
 
 bool func_cmp_int(Node *node1, Node *node2, Tree *tree);
 #endif
+
 
 #ifdef TREE_STR
 CODE_ERRORS Write_inf_about_node_to_File(FILE *stream_write, Node *node);
@@ -102,6 +103,10 @@ CODE_ERRORS Set_new_High(Tree *tree, Node *node);
 int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_node, bool func_cmp(Node *, Node *, Tree *), bool flag_add=true);
 
 CODE_ERRORS Increase_copacity_Tree(Tree *tree);
+
+Node *Free_all_data_in_Node(Node *top_node);
+
+CODE_ERRORS Shift_on_delta_mem_list_node(Tree *tree, long int delta_mem);
 
 Node *Create_Node(Tree *tree, data_type data, Node *left=nullptr, Node *right=nullptr, Node *prev=nullptr);
 

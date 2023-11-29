@@ -84,7 +84,7 @@ CODE_ERRORS Play_Akinator(Tree *tree)
         len_arr *buff = read_from_file_to_buff(stream_read);
 
         int counter = 0;
-        tree->beg_node = Read_from_file_Node((char *)buff->arr, tree, &counter);//переписать на CODE_ERRORS
+        tree->head_node.prev = Read_from_file_Node((char *)buff->arr, tree, &counter);//переписать на CODE_ERRORS
 
         free_mem_buf(buff);
     }
@@ -107,9 +107,9 @@ CODE_ERRORS Play_Akinator(Tree *tree)
     bool ans_out = Analaze_Ans_on_quest("no", "yes");
     if(ans_out)
     {
-        FILE *stream_to_write = open_file("database/new.txt", "w");//сделать динамическую генерацию имени
+        FILE *stream_to_write = open_file("database/new.txt", "w");//сделать динамическую генерацию имени(fstat смотреть есть ли файл)
 
-        Write_inf_about_node_to_File(stream_to_write, tree->beg_node);
+        Write_inf_about_node_to_File(stream_to_write, tree->head_node.prev);
 
         fclose(stream_to_write);
 
