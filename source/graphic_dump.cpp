@@ -41,7 +41,7 @@ CODE_ERRORS Write_Graphiz_Dump_to_File_Tree(FILE *stream_write, Tree *tree)
 
     fprintf(stream_write, "node [shape = Mrecord, color  = \"navy\", style = \"filled\"];\n");
 
-    HANDLER_ERROR(Recr_Write_Node_Dump(stream_write, tree->beg_node, 0));
+    HANDLER_ERROR(Recr_Write_Node_Dump(stream_write, tree->head_node.prev, 0));
 
     /*
     fprintf(stream_write, "fillcolor = \"#33ff66\"];\n");
@@ -52,7 +52,7 @@ CODE_ERRORS Write_Graphiz_Dump_to_File_Tree(FILE *stream_write, Tree *tree)
     fprintf(stream_write, "node%d -> node%d;\n", 0, cur_elem.val);
 
     fprintf(stream_write, "\nedge [color = \"cornFlowerBlue\"];\n\n");*/
-    Node *cur_node = tree->list_node;
+    Node *cur_node = tree->last_stor_node->list_node;
 
     for (int i = 0; i <= tree->size; i++)
     {

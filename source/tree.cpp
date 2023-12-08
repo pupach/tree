@@ -9,26 +9,47 @@ Tree *init_tree(int beg_copacity)
     if(tree == nullptr)     return nullptr;
 
     tree->copacity = beg_copacity;
-    tree->list_node = (Node *)calloc(sizeof(Node), beg_copacity);
     tree->size = 0;
+    tree->last_stor_node = New_stor_Node(tree->copacity);
 
-    tree->head_node.right = tree->list_node;
-    tree->list_node[0].right = tree->list_node + 1;
-    tree->list_node[0].left = &(tree->head_node);
-    for(int i = 1; i < (beg_copacity - 1); i++)
-    {
-        tree->list_node[i].right = tree->list_node + i + 1;
-        tree->list_node[i].left  = tree->list_node + i - 1;
-    }
-    tree->list_node[beg_copacity - 1].left = tree->list_node + beg_copacity - 2;
-    tree->head_node.left = tree->list_node + beg_copacity - 1;
+    tree->head_node.right = tree->last_stor_node->list_node;
+    tree->head_node.left = tree->last_stor_node->list_node + beg_copacity - 1;
 
     Stack *stk2 = (Stack *)calloc(sizeof(Stack), 1);
     Stack_init(stk2, 20, 2);
     tree->stk_of_choise = stk2;
 
-    LOG(1, stderr, "\n init_tree end tree->copacity=%d, tree->list_node=%p \n", tree->copacity, tree->list_node);
+    LOG(1, stderr, "\n init_tree end tree->copacity=%d, tree->last_stor_node->list_nodelast_stor_node->list_node=%p \n", tree->copacity, tree->last_stor_node->list_node);
     return tree;
+}
+
+Storage_Node *New_stor_Node(int copacity)
+{
+    if(copacity > 0)
+    {
+        Storage_Node *for_ret = (Storage_Node *)calloc(1, sizeof(Storage_Node));
+        if(for_ret != nullptr)
+        {
+            for_ret->copacity = copacity;
+
+            for_ret->list_node = (Node *)calloc(for_ret->copacity, sizeof(Node));
+
+            LOG(2, stderr, "New_stor_Node last_stor_node->list_node = %p \n", for_ret->list_node);
+
+            if(for_ret->list_node != nullptr)
+            {
+                for_ret->list_node[0].right = for_ret->list_node + 1;
+                for(int i = 1; i < (for_ret->copacity - 1); i++)
+                {
+                    for_ret->list_node[i].right = for_ret->list_node + i + 1;
+                    for_ret->list_node[i].left = for_ret->list_node + i - 1;
+                }
+                for_ret->list_node[for_ret->copacity - 1].left = for_ret->list_node + for_ret->copacity - 2;
+                return for_ret;
+            }
+        }
+    }
+    return nullptr;
 }
 
 CODE_ERRORS Set_new_High(Tree *tree, Node *node)
@@ -174,6 +195,8 @@ bool func_cmp_int(Node *node1, Node *node2, Tree *tree)
 
 Node *Free_all_data_in_Node(Node *top_node)
 {
+    LOG(1, stderr, "hkjjkhkjh/n");
+
     if((top_node == nullptr) || (top_node->prev == nullptr))
     {
         return top_node;
@@ -199,8 +222,10 @@ Node *Free_all_data_in_Node(Node *top_node)
         last_free_node->left = top_node;
     }
     #ifdef TREE_STR
+    LOG(1, stderr, "may/n");
         free(top_node->data);
     #endif
+    if(last_free_node == nullptr) return top_node;
 
     return last_free_node->right;
 }
@@ -217,15 +242,29 @@ CODE_ERRORS Destructor_Tree(Tree *tree)
         Free_all_data_in_Node(tree->head_node.prev);
     #endif
 
-    free(tree->list_node);
+    HANDLER_ERROR(Free_all_Stor_node(tree->last_stor_node));
     tree->head_node.prev = nullptr;
-    tree->list_node = nullptr;
     tree->size = -1;
     tree->copacity = -1;
 
     free(tree);
 
     return ALL_GOOD;
+}
+
+CODE_ERRORS Free_all_Stor_node(Storage_Node *last_stor_node)
+{
+    Storage_Node *next_stor_node = last_stor_node;
+
+    while(next_stor_node != nullptr)
+    {
+        LOG(2, stderr, "Free_all_Stor_node last_stor_node->list_node = %p \n", last_stor_node->list_node);
+
+        next_stor_node = last_stor_node->prev;
+        free(last_stor_node->list_node);
+        free(last_stor_node);
+        last_stor_node = next_stor_node;
+    }
 }
 
 Node *Create_Node(Tree *tree, data_type data, Node *left, Node *right, Node *prev)
@@ -237,24 +276,25 @@ Node *Create_Node(Tree *tree, data_type data, Node *left, Node *right, Node *pre
         data_type data_to_tree = data;
     #endif
 
-    LOG(1, stderr, "Create_Node, cop_factor = %d \n", tree->factor_copacity);
+ //   LOG(1, stderr, "Create_Node, cop_factor = %d \n", tree->factor_copacity);
 
-    if(tree->size >= tree->copacity)
+    if(tree->size >= (tree->copacity - 2))
     {
         HANDLER_ERROR(Increase_copacity_Tree(tree));
     }
     Node *cur_Node   = tree->head_node.right;
-    tree->head_node.right = cur_Node->right;
-    cur_Node->left = &tree->head_node;
+    assert(cur_Node != nullptr);
 
-    cur_Node->data   = data_to_tree;
-    cur_Node->left   = left;
-    cur_Node->right  = right;
-    cur_Node->prev   = prev;
+    tree->head_node.right = cur_Node->right;
+
+    HANDLER_ERROR(Tree_data_init(cur_Node, data));
+    cur_Node->left  = left;
+    cur_Node->right = right;
+    cur_Node->prev  = prev;
 
     if(left != nullptr)
     {
-        left->prev = cur_Node;
+        left->prev  = cur_Node;
     }
     if(right != nullptr)
     {
@@ -267,51 +307,50 @@ Node *Create_Node(Tree *tree, data_type data, Node *left, Node *right, Node *pre
 
 CODE_ERRORS Increase_copacity_Tree(Tree *tree)
 {
-    int new_copacity = tree->copacity * tree->factor_copacity * 2;
+    int new_copacity = tree->copacity * (tree->factor_copacity - 1);
     LOG(1, stderr, "Increase_copacity_Tree new_copacity = %d,copacity = %d tree->factor_copacity = %d \n", new_copacity, tree->copacity, tree->factor_copacity);
 
-    Node *new_list_node = (Node *)realloc(tree->list_node, new_copacity);
-    if(new_list_node == nullptr)      return PTR_NULL;
+    Storage_Node *new_stor = New_stor_Node(new_copacity);
+    if(new_stor == nullptr)            return PTR_ARR_NULL;
 
-    long int delta_mem = (long int)(new_list_node) - (long int)(tree->list_node);
-    tree->list_node = new_list_node;
-    HANDLER_ERROR(Shift_on_delta_mem_list_node(tree, delta_mem));
+    tree->copacity += new_copacity;
+    tree->last_stor_node->next = new_stor;
+    new_stor->prev = tree->last_stor_node;
+    tree->last_stor_node = new_stor;
 
-    tree->head_node.left = tree->list_node + tree->copacity;
-    for(int i = tree->copacity; i < new_copacity - 1; i++)
-    {
-        tree->list_node[i].right = tree->list_node + i + 1;
-        tree->list_node[i].left  = tree->list_node + i - 1;
-    }
-    tree->list_node[new_copacity - 1].left = tree->list_node + new_copacity - 2;
-    tree->head_node.left = tree->list_node + new_copacity - 1;
+    tree->head_node.right = tree->last_stor_node->list_node;
+    tree->head_node.left = tree->last_stor_node->list_node + new_copacity - 1;
 
-    tree->copacity = new_copacity;
     return ALL_GOOD;
 }
 
+/*
 CODE_ERRORS Shift_on_delta_mem_list_node(Tree *tree, long int delta_mem)
 {
     for(int i = 0; i < tree->size; i++)
     {
-        tree->list_node[i].left = (Node *)((long int)tree->list_node[i].left + delta_mem);
+        tree->list_node[i].left  = (Node *)((long int)tree->list_node[i].left + delta_mem);
         tree->list_node[i].right = (Node *)((long int)tree->list_node[i].right + delta_mem);
-        tree->list_node[i].prev = (Node *)((long int)tree->list_node[i].prev + delta_mem);
+        tree->list_node[i].prev  = (Node *)((long int)tree->list_node[i].prev + delta_mem);
     }
     tree->head_node.prev += delta_mem;
 
     return ALL_GOOD;
 }
+*/
 
 CODE_ERRORS Insert_Node_to_Tree(Node *node_to_ins, Node *node_after_ins, WAY_INS_NODE ins_mode, WAY_CPY_BRANCH cpy_mode)
 {
-    assert(node_to_ins != nullptr);
-    assert(node_after_ins != nullptr);
+    if((node_to_ins == nullptr) | (node_after_ins == nullptr))
+    {
+        LOG(1, stderr, "Insert_Node_to_Tree node_to_ins = %p  node_after_ins = %p\n", node_to_ins, node_after_ins);
+        return INS_NULL;
+    }
 
     Node *branch_to_cpy = nullptr;
-    node_to_ins->prev = node_after_ins;
+    node_to_ins->prev   = node_after_ins;
 
-    LOG(1, stderr, "node_to_ins = %p node_to_ins->prev = %p\n", node_to_ins, node_to_ins->prev);
+//    LOG(1, stderr, "node_to_ins = %p node_to_ins->prev = %p\n", node_to_ins, node_to_ins->prev);
 
     if (ins_mode == LEFT_INS)
     {
@@ -325,9 +364,9 @@ CODE_ERRORS Insert_Node_to_Tree(Node *node_to_ins, Node *node_after_ins, WAY_INS
     }
     else    return UNDEF_COM;
 
-    if(cpy_mode == LEFT_BRANCH)         node_to_ins->left = branch_to_cpy;
+    if(cpy_mode == LEFT_BRANCH)         node_to_ins->left   = branch_to_cpy;
 
-    else if(cpy_mode == RIGHT_BRANCH)   node_to_ins->right = branch_to_cpy;
+    else if(cpy_mode == RIGHT_BRANCH)   node_to_ins->right  = branch_to_cpy;
 
     else if(cpy_mode == NO_BRANCH)      Free_all_data_in_Node(branch_to_cpy);
 
@@ -336,40 +375,66 @@ CODE_ERRORS Insert_Node_to_Tree(Node *node_to_ins, Node *node_after_ins, WAY_INS
     return ALL_GOOD;
 }
 
-// TODO add documentation
-int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_node, bool func_cmp(Node *, Node *, Tree *), bool flag_add)
+
+int Set_Node_on_Place_in_Tree(Tree *tree, Node *cur_root, Node *cur_node, bool func_cmp(Node *, Node *, Tree *), bool flag_add)
 {
-    Node *save_top_node = tree->head_node.prev;
     int code_ret = 0;
-    bool result = func_cmp(cur_node, tree->head_node.prev, tree);
+    bool result = func_cmp(cur_node, cur_root, tree);
     if(result)
     {
-        if(tree->head_node.prev->right != nullptr)
+        if(cur_root->right != nullptr)
         {
             HANDLER_ERROR(Stack_Push(tree->stk_of_choise, (Elen_s) RIGHT_CHOISE)); // TODO do smth with stack
-            tree->head_node.prev = tree->head_node.prev->right; // TODO not modify beg_node by functions
-            code_ret = Set_Node_on_Place_in_Tree(tree, cur_node, func_cmp, flag_add);
+            code_ret = Set_Node_on_Place_in_Tree(tree, cur_root->right, cur_node , func_cmp, flag_add);
         }
         else if(flag_add)
         {
-            HANDLER_ERROR(Insert_Node_to_Tree(cur_node, tree->head_node.prev, RIGHT_INS));
+            HANDLER_ERROR(Insert_Node_to_Tree(cur_node, cur_root, RIGHT_INS));
         }
     }
     else
     {
-        if(tree->head_node.prev->left != nullptr)
+        if(cur_root->left != nullptr)
         {
             HANDLER_ERROR(Stack_Push(tree->stk_of_choise, (Elen_s) LEFT_CHOISE));
-            tree->head_node.prev = tree->head_node.prev->left;
-            code_ret = Set_Node_on_Place_in_Tree(tree, cur_node, func_cmp, flag_add);
+            code_ret = Set_Node_on_Place_in_Tree(tree, cur_root->left , cur_node, func_cmp, flag_add);
         }
         else if(flag_add)
         {
-            HANDLER_ERROR(Insert_Node_to_Tree(cur_node, tree->head_node.prev, LEFT_INS));
+            HANDLER_ERROR(Insert_Node_to_Tree(cur_node, cur_root, LEFT_INS));
         }
     }
-
-    tree->head_node.prev = save_top_node;
     return code_ret + 1;
 }
 
+Node *Place_Node_from_Stack(Tree *tree, int am_choise)
+{
+    Node *beg_node = tree->head_node.prev;
+    Elen_s elem_s;
+    for(int i = 0; i < am_choise; i++)
+    {
+        HANDLER_ERROR(Stack_Pop(tree->stk_of_choise, &elem_s));
+        switch(elem_s)
+        {
+            case LEFT_CHOISE:
+                beg_node = beg_node->left;
+                break;
+
+            case RIGHT_CHOISE:
+                beg_node = beg_node->right;
+                break;
+        }
+    }
+    return beg_node;
+}
+
+#ifdef TREE_DOUBLE
+
+CODE_ERRORS Tree_data_init(Node *cur_node, data_type data)
+{
+    cur_node->data.data = data.data;
+    cur_node->data.type_data = data.type_data;
+    return ALL_GOOD;
+}
+
+#endif

@@ -1,0 +1,2 @@
+size_s 0, copacity 4, increase_size 2, size_canar 8 
+hash_s 361, hash_data -1088, LEFT_canaray 1829 RIGHT_canaray 1840LINE 144, NAME_FUNC CODE_ERRORS Stack_init(Stack*, size_t, unsigned int), FILE_NAME ../Stack/source/stack.cpp

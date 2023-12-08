@@ -94,7 +94,7 @@ CODE_ERRORS Play_Akinator(Tree *tree)
     {
         fprintf(stdout, "game begin\n");
 
-        Set_Node_on_Place_in_Tree(tree, nullptr, func_cmp_akin, false);
+        Set_Node_on_Place_in_Tree(tree, tree->head_node.prev, nullptr, func_cmp_akin, false);
 
         fprintf(stdout, "вы хотите продолжать играть?\n");
 
